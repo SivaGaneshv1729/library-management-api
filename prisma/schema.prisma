@@ -1,0 +1,72 @@
+// prisma/schema.prisma
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum BookStatus {
+  available
+  borrowed
+  reserved
+  maintenance
+}
+
+enum MemberStatus {
+  active
+  suspended
+}
+
+enum TransactionStatus {
+  active
+  returned
+  overdue
+}
+
+model Book {
+  id               String        @id @default(uuid())
+  isbn             String        @unique
+  title            String
+  author           String
+  category         String
+  status           BookStatus    @default(available)
+  total_copies     Int
+  available_copies Int
+  transactions     Transaction[]
+}
+
+model Member {
+  id                String        @id @default(uuid())
+  name              String
+  email             String        @unique
+  membership_number String        @unique
+  status            MemberStatus  @default(active)
+  transactions      Transaction[]
+  fines             Fine[]
+}
+
+model Transaction {
+  id          String            @id @default(uuid())
+  book_id     String
+  member_id   String
+  borrowed_at DateTime          @default(now())
+  due_date    DateTime
+  returned_at DateTime?
+  status      TransactionStatus @default(active)
+  book        Book              @relation(fields: [book_id], references: [id])
+  member      Member            @relation(fields: [member_id], references: [id])
+  fines       Fine[]
+}
+
+model Fine {
+  id             String      @id @default(uuid())
+  member_id      String
+  transaction_id String
+  amount         Decimal
+  paid_at        DateTime?
+  member         Member      @relation(fields: [member_id], references: [id])
+  transaction    Transaction @relation(fields: [transaction_id], references: [id])
+}

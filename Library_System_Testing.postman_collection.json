@@ -1,0 +1,83 @@
+{
+	"info": {
+		"name": "Library Management System - Full Test Suite",
+		"description": "Tests for Books, Members, Borrowing Limits, Fines, and Overdue Logic.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. Setup - Create Book",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"isbn\": \"978-0132350884\",\n    \"title\": \"Clean Code\",\n    \"author\": \"Robert C. Martin\",\n    \"category\": \"Programming\",\n    \"total_copies\": 2,\n    \"available_copies\": 2\n}",
+					"options": { "raw": { "language": "json" } }
+				},
+				"url": "http://localhost:3000/books"
+			}
+		},
+		{
+			"name": "2. Setup - Create Member",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"name\": \"Jane Smith\",\n    \"email\": \"jane@example.com\",\n    \"membership_number\": \"MEM001\"\n}",
+					"options": { "raw": { "language": "json" } }
+				},
+				"url": "http://localhost:3000/members"
+			}
+		},
+		{
+			"name": "3. Operation - Borrow Book",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"memberId\": \"PASTE_MEMBER_ID_HERE\",\n    \"bookId\": \"PASTE_BOOK_ID_HERE\"\n}",
+					"options": { "raw": { "language": "json" } }
+				},
+				"url": "http://localhost:3000/transactions/borrow"
+			}
+		},
+		{
+			"name": "4. Rule Test - List Available Books",
+			"request": {
+				"method": "GET",
+				"url": "http://localhost:3000/books/available"
+			}
+		},
+		{
+			"name": "5. Rule Test - View Member Borrowed Books",
+			"request": {
+				"method": "GET",
+				"url": "http://localhost:3000/members/PASTE_MEMBER_ID_HERE/borrowed"
+			}
+		},
+		{
+			"name": "6. Operation - Return Book (Calculate Fine)",
+			"request": {
+				"method": "POST",
+				"url": "http://localhost:3000/transactions/PASTE_TRANSACTION_ID_HERE/return"
+			}
+		},
+		{
+			"name": "7. Reporting - List Overdue Transactions",
+			"request": {
+				"method": "GET",
+				"url": "http://localhost:3000/transactions/overdue"
+			}
+		},
+		{
+			"name": "8. Fine Management - Pay Fine",
+			"request": {
+				"method": "POST",
+				"url": "http://localhost:3000/transactions/fines/PASTE_FINE_ID_HERE/pay"
+			}
+		}
+	]
+}
