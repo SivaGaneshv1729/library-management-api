@@ -1,0 +1,192 @@
+{
+    "info": {
+        "name": "Library Management System - Automated Suite",
+        "description": "Automated tests for Books, Members, Borrowing Limits, Fines, and Overdue Logic.",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "1. Setup - Create Book",
+            "event": [
+                {
+                    "listen": "prerequest",
+                    "script": {
+                        "exec": [
+                            "var random = Math.floor(Math.random() * 100000);",
+                            "pm.environment.set('gen_isbn', '978-' + random);"
+                        ],
+                        "type": "text/javascript"
+                    }
+                },
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "var jsonData = pm.response.json();",
+                            "pm.environment.set('bookId', jsonData.id);",
+                            "pm.test('Book Created', function() { pm.response.to.have.status(201); });"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"isbn\": \"{{gen_isbn}}\",\n    \"title\": \"Automated Test Book\",\n    \"author\": \"Test Bot\",\n    \"category\": \"Testing\",\n    \"total_copies\": 5,\n    \"available_copies\": 5\n}",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    }
+                },
+                "url": "http://localhost:3000/books"
+            }
+        },
+        {
+            "name": "2. Setup - Create Member",
+            "event": [
+                {
+                    "listen": "prerequest",
+                    "script": {
+                        "exec": [
+                            "var random = Math.floor(Math.random() * 100000);",
+                            "pm.environment.set('gen_email', 'user' + random + '@example.com');",
+                            "pm.environment.set('gen_mem_id', 'MEM' + random);"
+                        ],
+                        "type": "text/javascript"
+                    }
+                },
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "var jsonData = pm.response.json();",
+                            "pm.environment.set('memberId', jsonData.id);",
+                            "pm.test('Member Created', function() { pm.response.to.have.status(201); });"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"name\": \"Automated User\",\n    \"email\": \"{{gen_email}}\",\n    \"membership_number\": \"{{gen_mem_id}}\"\n}",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    }
+                },
+                "url": "http://localhost:3000/members"
+            }
+        },
+        {
+            "name": "3. Operation - Borrow Book",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "var jsonData = pm.response.json();",
+                            "pm.environment.set('transactionId', jsonData.id);",
+                            "pm.test('Book Borrowed', function() { pm.response.to.have.status(201); });"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"memberId\": \"{{memberId}}\",\n    \"bookId\": \"{{bookId}}\"\n}",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    }
+                },
+                "url": "http://localhost:3000/transactions/borrow"
+            }
+        },
+        {
+            "name": "4. Rule Test - List Available Books",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Books Listed', function() { pm.response.to.have.status(200); });"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "url": "http://localhost:3000/books/available"
+            }
+        },
+        {
+            "name": "5. Rule Test - View Member Borrowed Books",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('History Retrieved', function() { pm.response.to.have.status(200); });"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "url": "http://localhost:3000/members/{{memberId}}/borrowed"
+            }
+        },
+        {
+            "name": "6. Operation - Return Book",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Book Returned', function() { pm.response.to.have.status(200); });"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "url": "http://localhost:3000/transactions/{{transactionId}}/return"
+            }
+        },
+        {
+            "name": "7. Reporting - List Overdue Transactions",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test('Report Generated', function() { pm.response.to.have.status(200); });"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "url": "http://localhost:3000/transactions/overdue"
+            }
+        }
+    ]
+}

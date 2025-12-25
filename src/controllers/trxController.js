@@ -19,13 +19,8 @@ const trxController = {
   // MANDATORY TASK: GET /transactions/overdue
   listOverdue: async (req, res, next) => {
     try {
-      // Sync statuses before listing
-      await LibraryService.syncOverdueStatus();
-      
-      const overdue = await prisma.transaction.findMany({
-        where: { status: 'overdue' },
-        include: { member: true, book: true }
-      });
+      // Sync statuses and fetch overdue items via Service
+      const overdue = await LibraryService.getOverdueReport();
       res.json(overdue);
     } catch (error) { next(error); }
   }

@@ -11,7 +11,7 @@ const LibraryService = {
       // 1. Validate Member
       const member = await tx.member.findUnique({
         where: { id: memberId },
-        include: { 
+        include: {
           transactions: { where: { status: 'active' } },
           fines: { where: { paid_at: null } }
         }
@@ -19,10 +19,10 @@ const LibraryService = {
 
       if (!member) throw new Error("Member not found.");
       if (member.status === 'suspended') throw new Error("Member is suspended from borrowing.");
-      
+
       // Rule: Member cannot borrow more than 3 books simultaneously
       if (member.transactions.length >= 3) throw new Error("Borrowing limit (3 books) reached.");
-      
+
       // Rule: Member with any unpaid fines is blocked from borrowing
       if (member.fines.length > 0) throw new Error("Borrowing blocked: Member has unpaid fines.");
 
@@ -52,7 +52,7 @@ const LibraryService = {
       const newAvailableCopies = book.available_copies - 1;
       await tx.book.update({
         where: { id: bookId },
-        data: { 
+        data: {
           available_copies: newAvailableCopies,
           // Update status if no copies left
           status: newAvailableCopies === 0 ? 'borrowed' : 'available'
@@ -89,9 +89,9 @@ const LibraryService = {
       // 1. Update Transaction
       await tx.transaction.update({
         where: { id: transactionId },
-        data: { 
+        data: {
           returned_at: returnedAt,
-          status: 'returned' 
+          status: 'returned'
         }
       });
 
@@ -109,19 +109,19 @@ const LibraryService = {
       // 3. Update Book Availability
       await tx.book.update({
         where: { id: trx.book_id },
-        data: { 
+        data: {
           available_copies: trx.book.available_copies + 1,
-          status: 'available' 
+          status: 'available'
         }
       });
 
       // 4. Check Suspension Rule: Suspended if 3+ concurrently overdue
       await this.syncMemberSuspension(trx.member_id, tx);
 
-      return { 
-        message: "Book returned successfully", 
+      return {
+        message: "Book returned successfully",
         fineApplied: fineAmount,
-        transactionId: trx.id 
+        transactionId: trx.id
       };
     });
   },
@@ -148,7 +148,7 @@ const LibraryService = {
         where: { id: memberId },
         data: { status: 'suspended' }
       });
-      
+
       // Update transaction statuses to 'overdue' in the DB
       await txClient.transaction.updateMany({
         where: {
@@ -157,6 +157,33 @@ const LibraryService = {
         data: { status: 'overdue' }
       });
     }
+  },
+
+  /**
+   * GLOBAL SYNC FOR OVERDUE ITEMS
+   * Updates all active transactions that have passed their due date.
+   */
+  async syncOverdueStatus() {
+    const now = new Date();
+    await prisma.transaction.updateMany({
+      where: {
+        status: 'active',
+        due_date: { lt: now }
+      },
+      data: { status: 'overdue' }
+    });
+  },
+
+  /**
+   * GENERATE OVERDUE REPORT
+   * Syncs statuses first, then returns all overdue items.
+   */
+  async getOverdueReport() {
+    await this.syncOverdueStatus();
+    return await prisma.transaction.findMany({
+      where: { status: 'overdue' },
+      include: { member: true, book: true }
+    });
   }
 };
 
